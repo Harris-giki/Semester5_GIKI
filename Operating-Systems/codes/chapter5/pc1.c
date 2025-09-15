@@ -20,6 +20,6 @@ int main (int argc, char *argv[]) //argc (how many arg passes) and argv (array f
     {
         printf("hello, I am parent of %d (pid:%d)\n", rc, (int) getpid());
     }
-    return 0
+    return 0;
 
 }
