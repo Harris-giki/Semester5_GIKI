@@ -47,15 +47,15 @@ for size in tree_sizes:
     while root.size<size:
         root= tree(height=None, isperfect=False)
 
-start = time.time()
-bfs(root)
-end=time.time()
-bfs_times.append(end-start)
+    start = time.time()
+    bfs(root)
+    end=time.time()
+    bfs_times.append(end-start)
 
-start = time.time()
-dfs(root)
-end = time.time()
-dfs_times.append(end-start)
+    start = time.time()
+    dfs(root)
+    end = time.time()
+    dfs_times.append(end-start)
 
 plt.plot(tree_sizes, bfs_times, label='BFS Time', marker='o')
 plt.plot(tree_sizes, dfs_times, label='DFS Time', marker='s')
