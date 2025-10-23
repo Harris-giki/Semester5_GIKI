@@ -21,7 +21,7 @@ int main()
     }
 
     int byteRead;
-    while((byteRead = read(fd, buffer, sizeof(buffer))>0))
+    while((byteRead = read(fd, buffer, sizeof(buffer))>0)) //reading from the file
     {
         write(1, buffer, byteRead); // 1 means output @ terminal
     }
@@ -38,7 +38,7 @@ int main()
     }
 
     char words[100];
-    while(fscanf(fp, "%s", word)==1)
+    while(fscanf(fp, "%s", word)==1) // reading from the file
     {
         fprintf(stdout, "%s", word); // print to terminal
     }
