@@ -2,18 +2,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-/* ---------------------------------------------------
-   Test-And-Set primitive (atomic)
-   --------------------------------------------------- */
     int TestAndSet(int *old_ptr, int new) {
     int old = *old_ptr; // fetch old value at old_ptr
     *old_ptr = new; // store ’new’ into old_ptr
     return old; // return the old value
 }
-
-/* ---------------------------------------------------
-   Spinlock structure and functions
-   --------------------------------------------------- */
 typedef struct __lock_t {
     int flag;   // 0 = free, 1 = locked
 } lock_t;
@@ -33,9 +26,6 @@ void unlock(lock_t *lock) {
     lock->flag = 0;
 }
 
-/* ---------------------------------------------------
-   Worker thread function
-   --------------------------------------------------- */
 void *worker_task(void *arg) {
     lock_t *sharedLock = (lock_t *)arg;
 
@@ -54,9 +44,6 @@ void *worker_task(void *arg) {
     return NULL;
 }
 
-/* ---------------------------------------------------
-   Main: test with two threads
-   --------------------------------------------------- */
 int main() {
     pthread_t t1, t2;
     lock_t myLock;
