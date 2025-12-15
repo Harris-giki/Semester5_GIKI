@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Medical-themed color palette */
+  --primary: #0891b2;
+  --primary-hover: #0e7490;
+  --primary-light: #a5f3fc;
+  --primary-dark: #164e63;
+  
+  --success: #059669;
+  --success-light: #d1fae5;
+  --success-dark: #065f46;
+  
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --warning-dark: #92400e;
+  
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --danger-dark: #991b1b;
+  
+  --info: #2563eb;
+  --info-light: #dbeafe;
+  --info-dark: #1e40af;
+
+  /* Neutral tones */
+  --background: #fafbfc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0891b2;
+  
+  --radius: 0.75rem;
+}
+
+.dark {
+  --primary: #22d3ee;
+  --primary-hover: #67e8f9;
+  --primary-light: #164e63;
+  --primary-dark: #a5f3fc;
+  
+  --success: #10b981;
+  --success-light: #064e3b;
+  --success-dark: #a7f3d0;
+  
+  --warning: #f59e0b;
+  --warning-light: #451a03;
+  --warning-dark: #fcd34d;
+  
+  --danger: #ef4444;
+  --danger-light: #450a0a;
+  --danger-dark: #fca5a5;
+  
+  --info: #3b82f6;
+  --info-light: #1e3a8a;
+  --info-dark: #93c5fd;
+
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #334155;
+  --input: #334155;
+  --ring: #22d3ee;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Custom medical-themed styles */
+.gradient-bg {
+  background: linear-gradient(135deg, 
+    var(--background) 0%, 
+    color-mix(in srgb, var(--primary) 5%, var(--background)) 50%,
+    color-mix(in srgb, var(--info) 3%, var(--background)) 100%
+  );
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.risk-very-low {
+  --risk-color: var(--success);
+  --risk-bg: var(--success-light);
+}
+
+.risk-low {
+  --risk-color: #14b8a6;
+  --risk-bg: #ccfbf1;
+}
+
+.risk-moderate {
+  --risk-color: var(--warning);
+  --risk-bg: var(--warning-light);
+}
+
+.risk-high {
+  --risk-color: #ea580c;
+  --risk-bg: #fff7ed;
+}
+
+.risk-very-high {
+  --risk-color: var(--danger);
+  --risk-bg: var(--danger-light);
+}
+
+/* Pulse animation for urgent items */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px color-mix(in srgb, var(--danger) 20%, transparent);
+  }
+}
+
+.pulse-urgent {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in srgb, var(--muted) 70%, var(--card)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
