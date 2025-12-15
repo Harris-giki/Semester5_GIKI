@@ -7,10 +7,10 @@ import {
   Image as ImageIcon, 
   X,
   MagnifyingGlass,
-  Sparkle
+  Sparkle,
+  FileImage,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 
 interface ImageUploaderProps {
   onImageSelect: (file: File) => void;
@@ -58,12 +58,12 @@ export function ImageUploader({ onImageSelect, isLoading }: ImageUploaderProps) 
       <div
         {...getRootProps()}
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 cursor-pointer",
+          "relative border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer overflow-hidden",
           isDragActive
-            ? "border-primary bg-primary/5 scale-[1.02]"
-            : "border-border hover:border-primary/50 hover:bg-muted/50",
-          isLoading && "opacity-50 cursor-not-allowed",
-          preview && "p-4"
+            ? "border-accent-cyan bg-accent-cyan/5 scale-[1.01]"
+            : "border-border hover:border-accent-cyan/50 hover:bg-muted/30",
+          isLoading && "opacity-50 cursor-not-allowed pointer-events-none",
+          preview ? "p-4" : "p-8"
         )}
       >
         <input {...getInputProps()} />
@@ -73,64 +73,91 @@ export function ImageUploader({ onImageSelect, isLoading }: ImageUploaderProps) 
             <img
               src={preview}
               alt="Mammogram preview"
-              className="max-h-80 mx-auto rounded-lg shadow-lg"
+              className="max-h-72 mx-auto rounded-lg"
             />
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 clearImage();
               }}
-              className="absolute -top-2 -right-2 p-1.5 bg-danger text-white rounded-full shadow-md hover:bg-danger/90 transition-colors"
+              className="absolute -top-2 -right-2 p-2 bg-danger text-white rounded-full shadow-lg hover:bg-danger/90 transition-colors"
             >
-              <X size={16} weight="bold" />
+              <X size={14} weight="bold" />
             </button>
+            
+            {/* File info */}
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <FileImage size={14} />
+              <span>{selectedFile?.name}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span>{selectedFile && (selectedFile.size / 1024).toFixed(1)} KB</span>
+            </div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              {isDragActive ? (
-                <Sparkle size={32} className="text-primary animate-pulse" />
-              ) : (
-                <UploadSimple size={32} className="text-primary" />
-              )}
+          <div className="text-center py-6">
+            {/* Icon */}
+            <div className="relative mx-auto w-16 h-16 mb-4">
+              <div className="absolute inset-0 bg-accent-cyan/20 blur-xl rounded-full" />
+              <div className={cn(
+                "relative w-full h-full rounded-full flex items-center justify-center",
+                "bg-gradient-to-br from-accent-cyan/20 to-accent-cyan/5 border border-accent-cyan/20"
+              )}>
+                {isDragActive ? (
+                  <Sparkle size={28} className="text-accent-cyan animate-pulse" weight="fill" />
+                ) : (
+                  <UploadSimple size={28} className="text-accent-cyan" />
+                )}
+              </div>
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {isDragActive
-                ? "Drop your mammogram here"
-                : "Upload Mammogram Image"}
+            
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {isDragActive ? "Drop your file here" : "Upload Mammogram"}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Drag and drop or click to select
+              Drag and drop or{" "}
+              <span className="text-accent-cyan font-medium">browse</span>
             </p>
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
               <ImageIcon size={14} />
-              <span>Supports PNG, JPG, JPEG, BMP, WebP</span>
+              <span>PNG, JPG, JPEG, BMP, WebP supported</span>
             </div>
           </div>
+        )}
+        
+        {/* Decorative corners */}
+        {!preview && (
+          <>
+            <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-accent-cyan/30 rounded-tl-lg" />
+            <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-accent-cyan/30 rounded-tr-lg" />
+            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-accent-cyan/30 rounded-bl-lg" />
+            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-accent-cyan/30 rounded-br-lg" />
+          </>
         )}
       </div>
 
       {preview && (
-        <Button
+        <button
           onClick={handleAnalyze}
           disabled={isLoading}
-          className="w-full"
-          size="lg"
+          className={cn(
+            "w-full btn-primary py-3 rounded-xl flex items-center justify-center gap-2 font-semibold",
+            isLoading && "opacity-70 cursor-not-allowed"
+          )}
         >
           {isLoading ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               Analyzing...
             </>
           ) : (
             <>
-              <MagnifyingGlass size={20} className="mr-2" />
+              <MagnifyingGlass size={20} weight="bold" />
               Analyze Mammogram
             </>
           )}
-        </Button>
+        </button>
       )}
     </div>
   );
 }
-

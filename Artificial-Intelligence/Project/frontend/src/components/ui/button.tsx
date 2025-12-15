@@ -1,37 +1,24 @@
-"use client";
-
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-white hover:bg-primary-hover shadow-sm hover:shadow-md",
-        destructive:
-          "bg-danger text-white hover:bg-danger/90 shadow-sm",
-        outline:
-          "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-white",
-        secondary:
-          "bg-muted text-foreground hover:bg-muted/80",
-        ghost:
-          "hover:bg-muted hover:text-foreground",
-        link: 
-          "text-primary underline-offset-4 hover:underline",
-        success:
-          "bg-success text-white hover:bg-success/90 shadow-sm",
-        warning:
-          "bg-warning text-white hover:bg-warning/90 shadow-sm",
+        default: "bg-accent-cyan text-black hover:bg-accent-cyan/90",
+        destructive: "bg-danger text-white hover:bg-danger/90",
+        outline: "border border-border bg-transparent hover:bg-muted hover:text-foreground",
+        secondary: "bg-muted text-foreground hover:bg-muted/80",
+        ghost: "hover:bg-muted hover:text-foreground",
+        link: "text-accent-cyan underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-lg px-8 text-base",
-        xl: "h-14 rounded-xl px-10 text-lg",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-lg px-8",
         icon: "h-10 w-10",
       },
     },
@@ -63,4 +50,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
-

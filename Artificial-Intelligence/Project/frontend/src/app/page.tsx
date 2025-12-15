@@ -3,23 +3,29 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
-import * as Tabs from "@radix-ui/react-tabs";
 import {
   Upload,
-  ChartBar,
+  ChartDonut,
   ListBullets,
   Eye,
   ArrowCounterClockwise,
+  Brain,
+  Pulse,
+  Shield,
+  Sparkle,
+  CaretRight,
 } from "@phosphor-icons/react";
 import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 import { ImageUploader } from "@/components/ImageUploader";
 import { PatientForm } from "@/components/PatientForm";
 import { DiagnosisResults } from "@/components/DiagnosisResults";
 import { GradCAMViewer } from "@/components/GradCAMViewer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { StatsOverview } from "@/components/StatsOverview";
 import { cn, API_BASE_URL } from "@/lib/utils";
 import type { DiagnosisResponse, PatientData } from "@/lib/types";
+
+type TabValue = "overview" | "upload" | "results" | "details" | "explainability";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,19 +39,17 @@ export default function Home() {
     lump_detected: false,
     nipple_discharge: false,
   });
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState<TabValue>("overview");
 
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
     
-    // Start analysis
     await analyzeMammogram(file);
   };
 
@@ -58,7 +62,6 @@ export default function Home() {
       formData.append("image", file);
       formData.append("enhance", "true");
       
-      // Add patient data
       if (patientData.age) {
         formData.append("age", patientData.age.toString());
       }
@@ -82,8 +85,8 @@ export default function Home() {
       setResults(data);
       setActiveTab("results");
       
-      toast.success("Analysis complete!", {
-        description: "View your results in the Results tab.",
+      toast.success("Analysis complete", {
+        description: "View your diagnosis results now.",
       });
     } catch (error) {
       console.error("Analysis error:", error);
@@ -116,13 +119,13 @@ export default function Home() {
       const data = await response.json();
       setHeatmapImage(data.heatmap);
       
-      toast.success("Grad-CAM generated!", {
-        description: "View the heatmap in the Explainability tab.",
+      toast.success("Visualization ready", {
+        description: "Grad-CAM heatmap generated successfully.",
       });
       setActiveTab("explainability");
     } catch (error) {
       console.error("Grad-CAM error:", error);
-      toast.error("Grad-CAM generation failed", {
+      toast.error("Generation failed", {
         description: "Please try again.",
       });
     } finally {
@@ -138,211 +141,238 @@ export default function Home() {
     setActiveTab("upload");
   };
 
+  const navItems = [
+    { id: "overview" as const, label: "Overview", icon: ChartDonut },
+    { id: "upload" as const, label: "New Analysis", icon: Upload },
+    { id: "results" as const, label: "Results", icon: Pulse, disabled: !results },
+    { id: "details" as const, label: "Details", icon: ListBullets, disabled: !results },
+    { id: "explainability" as const, label: "Explainability", icon: Eye, disabled: !selectedImage },
+  ];
+
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen livekit-bg">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Introduction */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
-          >
-            <h2 className="text-3xl font-bold text-foreground mb-3">
-              AI-Powered Breast Tumor Analysis
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Upload a mammogram image for comprehensive analysis combining deep learning
-              classification with expert medical knowledge and fuzzy logic reasoning.
-            </p>
-          </motion.div>
+      <div className="flex">
+        {/* Sidebar */}
+        <Sidebar 
+          items={navItems} 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+        />
 
-          <Tabs.Root
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-6"
-          >
-            {/* Tab List */}
-            <Tabs.List className="flex gap-1 p-1 bg-muted rounded-xl">
-              <TabTrigger value="upload" isActive={activeTab === "upload"}>
-                <Upload size={18} />
-                <span>Upload</span>
-              </TabTrigger>
-              <TabTrigger
-                value="results"
-                isActive={activeTab === "results"}
-                disabled={!results}
-              >
-                <ChartBar size={18} />
-                <span>Results</span>
-              </TabTrigger>
-              <TabTrigger
-                value="details"
-                isActive={activeTab === "details"}
-                disabled={!results}
-              >
-                <ListBullets size={18} />
-                <span>Details</span>
-              </TabTrigger>
-              <TabTrigger
-                value="explainability"
-                isActive={activeTab === "explainability"}
-                disabled={!selectedImage}
-              >
-                <Eye size={18} />
-                <span>Explainability</span>
-              </TabTrigger>
-            </Tabs.List>
-
-            {/* Upload Tab */}
-            <Tabs.Content value="upload">
-              <div className="grid lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mammogram Image</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ImageUploader
-                      onImageSelect={handleImageSelect}
-                      isLoading={isLoading}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Patient Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <PatientForm
-                      patientData={patientData}
-                      onChange={setPatientData}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            </Tabs.Content>
-
-            {/* Results Tab */}
-            <Tabs.Content value="results">
-              <AnimatePresence mode="wait">
-                {results ? (
-                  <div className="space-y-4">
-                    <div className="flex justify-end">
-                      <Button variant="outline" onClick={resetAnalysis}>
-                        <ArrowCounterClockwise size={18} className="mr-2" />
-                        New Analysis
-                      </Button>
+        {/* Main Content */}
+        <main className="flex-1 p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <AnimatePresence mode="wait">
+              {/* Overview Tab */}
+              {activeTab === "overview" && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-8"
+                >
+                  {/* Hero Section */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0c0c0e] to-[#18181b] border border-border p-8 lg:p-12">
+                    <div className="absolute inset-0 dot-pattern opacity-50" />
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 text-accent-cyan text-sm font-medium mb-4">
+                        <Sparkle size={16} weight="fill" />
+                        <span>AI-Powered Diagnosis</span>
+                      </div>
+                      <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+                        Breast Tumor<br />
+                        <span className="text-accent-cyan">Analysis System</span>
+                      </h1>
+                      <p className="text-muted-foreground max-w-xl text-lg mb-8">
+                        Combining deep learning classification with rule-based expert 
+                        reasoning and fuzzy logic for comprehensive tumor analysis.
+                      </p>
+                      <button
+                        onClick={() => setActiveTab("upload")}
+                        className="btn-primary px-6 py-3 rounded-lg flex items-center gap-2"
+                      >
+                        Start Analysis
+                        <CaretRight size={18} weight="bold" />
+                      </button>
                     </div>
-                    <DiagnosisResults results={results} />
+                    
+                    {/* Decorative gradient */}
+                    <div className="absolute -right-20 -top-20 w-80 h-80 bg-accent-cyan/10 rounded-full blur-3xl" />
+                    <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-accent-purple/10 rounded-full blur-3xl" />
                   </div>
-                ) : (
-                  <EmptyState
-                    message="No analysis results yet"
-                    description="Upload a mammogram image to get started"
-                  />
-                )}
-              </AnimatePresence>
-            </Tabs.Content>
 
-            {/* Details Tab */}
-            <Tabs.Content value="details">
-              <AnimatePresence mode="wait">
-                {results ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-6"
-                  >
-                    {/* Image Stats */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Image Analysis</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <StatItem
-                            label="Dimensions"
-                            value={`${results.image_stats.width} × ${results.image_stats.height}`}
-                          />
-                          <StatItem
-                            label="Mean Intensity"
-                            value={results.image_stats.mean_intensity.toFixed(1)}
-                          />
-                          <StatItem
-                            label="Std Deviation"
-                            value={results.image_stats.std_intensity.toFixed(1)}
-                          />
-                          <StatItem
-                            label="Contrast Ratio"
-                            value={`${(results.image_stats.contrast_ratio * 100).toFixed(1)}%`}
-                          />
+                  {/* Stats Overview */}
+                  <StatsOverview results={results} />
+
+                  {/* Features Grid */}
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <FeatureCard
+                      icon={Brain}
+                      title="CNN Classification"
+                      description="ResNet50-based deep learning model trained on mammogram images for accurate tumor detection."
+                      color="cyan"
+                    />
+                    <FeatureCard
+                      icon={Shield}
+                      title="Expert System"
+                      description="Rule-based reasoning implementing clinical guidelines for comprehensive risk assessment."
+                      color="purple"
+                    />
+                    <FeatureCard
+                      icon={Pulse}
+                      title="Fuzzy Logic"
+                      description="Handles uncertainty in medical data to provide nuanced risk scoring and interpretations."
+                      color="orange"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Upload Tab */}
+              {activeTab === "upload" && (
+                <motion.div
+                  key="upload"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">New Analysis</h2>
+                      <p className="text-muted-foreground mt-1">
+                        Upload a mammogram image and provide patient information
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <div className="glass-card rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                        <Upload size={20} className="text-accent-cyan" />
+                        Mammogram Image
+                      </h3>
+                      <ImageUploader
+                        onImageSelect={handleImageSelect}
+                        isLoading={isLoading}
+                      />
+                    </div>
+
+                    <div className="glass-card rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                        <ListBullets size={20} className="text-accent-purple" />
+                        Patient Information
+                      </h3>
+                      <PatientForm
+                        patientData={patientData}
+                        onChange={setPatientData}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Results Tab */}
+              {activeTab === "results" && (
+                <motion.div
+                  key="results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  {results ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-2xl font-bold text-foreground">Analysis Results</h2>
+                          <p className="text-muted-foreground mt-1">
+                            AI-powered diagnosis and risk assessment
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <button
+                          onClick={resetAnalysis}
+                          className="btn-ghost px-4 py-2 rounded-lg flex items-center gap-2"
+                        >
+                          <ArrowCounterClockwise size={18} />
+                          New Analysis
+                        </button>
+                      </div>
+                      <DiagnosisResults results={results} />
+                    </>
+                  ) : (
+                    <EmptyState
+                      icon={ChartDonut}
+                      title="No results yet"
+                      description="Upload and analyze a mammogram to see results"
+                      action={() => setActiveTab("upload")}
+                      actionLabel="Start Analysis"
+                    />
+                  )}
+                </motion.div>
+              )}
 
-                    {/* Expert Explanations */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Expert System Explanations</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
+              {/* Details Tab */}
+              {activeTab === "details" && (
+                <motion.div
+                  key="details"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  {results ? (
+                    <>
+                      <div>
+                        <h2 className="text-2xl font-bold text-foreground">Detailed Analysis</h2>
+                        <p className="text-muted-foreground mt-1">
+                          In-depth breakdown of the diagnostic process
+                        </p>
+                      </div>
+                      
+                      {/* Image Stats */}
+                      <div className="glass-card rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Image Statistics</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <StatBox label="Dimensions" value={`${results.image_stats.width} × ${results.image_stats.height}`} />
+                          <StatBox label="Mean Intensity" value={results.image_stats.mean_intensity.toFixed(1)} />
+                          <StatBox label="Std Deviation" value={results.image_stats.std_intensity.toFixed(1)} />
+                          <StatBox label="Contrast" value={`${(results.image_stats.contrast_ratio * 100).toFixed(1)}%`} />
+                        </div>
+                      </div>
+
+                      {/* Expert Explanations */}
+                      <div className="glass-card rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Expert System Explanations</h3>
+                        <div className="space-y-3">
                           {results.expert_analysis.explanations.map((exp, idx) => (
                             <div
                               key={idx}
-                              className="p-4 rounded-lg bg-muted/50 text-sm"
+                              className="p-4 rounded-lg bg-muted/30 text-sm text-foreground/90 border border-border"
                             >
                               {exp}
                             </div>
                           ))}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
 
-                    {/* Additional Considerations */}
-                    {results.expert_analysis.additional_considerations.length > 0 && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Additional Considerations</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2">
-                            {results.expert_analysis.additional_considerations.map(
-                              (consideration, idx) => (
-                                <li
-                                  key={idx}
-                                  className="flex items-start gap-2 text-sm"
-                                >
-                                  <span className="text-primary">•</span>
-                                  {consideration}
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* All Fired Rules */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Rules Activated</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
+                      {/* Rules Fired */}
+                      <div className="glass-card rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Rules Activated</h3>
+                        <div className="grid md:grid-cols-2 gap-3">
                           {results.expert_analysis.rules_fired.map((rule) => (
                             <div
                               key={rule.id}
-                              className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                              className="p-4 rounded-lg bg-muted/20 border border-border hover:border-accent-cyan/30 transition-colors"
                             >
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-mono text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-mono text-xs px-2 py-1 rounded bg-accent-cyan/10 text-accent-cyan">
                                   {rule.id}
                                 </span>
-                                <span className="font-medium text-sm">
+                                <span className="font-medium text-sm text-foreground">
                                   {rule.name}
                                 </span>
                               </div>
@@ -352,106 +382,126 @@ export default function Home() {
                             </div>
                           ))}
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ) : (
-                  <EmptyState
-                    message="No details available"
-                    description="Complete an analysis to view detailed information"
-                  />
-                )}
-              </AnimatePresence>
-            </Tabs.Content>
-
-            {/* Explainability Tab */}
-            <Tabs.Content value="explainability">
-              {selectedImage && imagePreview ? (
-                <GradCAMViewer
-                  originalImage={imagePreview}
-                  heatmapImage={heatmapImage}
-                  isLoading={isGeneratingGradCAM}
-                  onGenerateGradCAM={generateGradCAM}
-                />
-              ) : (
-                <EmptyState
-                  message="No image selected"
-                  description="Upload an image first to generate explainability visualizations"
-                />
+                      </div>
+                    </>
+                  ) : (
+                    <EmptyState
+                      icon={ListBullets}
+                      title="No details available"
+                      description="Complete an analysis to view detailed information"
+                      action={() => setActiveTab("upload")}
+                      actionLabel="Start Analysis"
+                    />
+                  )}
+                </motion.div>
               )}
-            </Tabs.Content>
-          </Tabs.Root>
-        </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border mt-16 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>
-            Hybrid AI-Based Breast Tumor Diagnosis System | CS351 AI Project
-          </p>
-          <p className="mt-1">
-            Combining CNN Classification with Rule-Based Expert Reasoning
-          </p>
-        </div>
-      </footer>
+              {/* Explainability Tab */}
+              {activeTab === "explainability" && (
+                <motion.div
+                  key="explainability"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  {selectedImage && imagePreview ? (
+                    <>
+                      <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-foreground">Model Explainability</h2>
+                        <p className="text-muted-foreground mt-1">
+                          Grad-CAM visualization showing areas of interest
+                        </p>
+                      </div>
+                      <GradCAMViewer
+                        originalImage={imagePreview}
+                        heatmapImage={heatmapImage}
+                        isLoading={isGeneratingGradCAM}
+                        onGenerateGradCAM={generateGradCAM}
+                      />
+                    </>
+                  ) : (
+                    <EmptyState
+                      icon={Eye}
+                      title="No image selected"
+                      description="Upload an image to generate explainability visualizations"
+                      action={() => setActiveTab("upload")}
+                      actionLabel="Upload Image"
+                    />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
 
-interface TabTriggerProps {
-  value: string;
-  isActive: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
+function FeatureCard({
+  icon: Icon,
+  title,
+  description,
+  color,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  color: "cyan" | "purple" | "orange";
+}) {
+  const colorClasses = {
+    cyan: "text-accent-cyan bg-accent-cyan/10",
+    purple: "text-accent-purple bg-accent-purple/10",
+    orange: "text-accent-orange bg-accent-orange/10",
+  };
+
+  return (
+    <div className="stat-card rounded-xl p-6">
+      <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center mb-4", colorClasses[color])}>
+        <Icon size={24} />
+      </div>
+      <h3 className="font-semibold text-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
 }
 
-function TabTrigger({ value, isActive, disabled, children }: TabTriggerProps) {
+function StatBox({ label, value }: { label: string; value: string }) {
   return (
-    <Tabs.Trigger
-      value={value}
-      disabled={disabled}
-      className={cn(
-        "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-        isActive
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground",
-        disabled && "opacity-50 cursor-not-allowed"
-      )}
-    >
-      {children}
-    </Tabs.Trigger>
+    <div className="p-4 rounded-lg bg-muted/20 text-center">
+      <div className="text-xl font-semibold text-foreground">{value}</div>
+      <div className="text-xs text-muted-foreground mt-1">{label}</div>
+    </div>
   );
 }
 
 function EmptyState({
-  message,
+  icon: Icon,
+  title,
   description,
+  action,
+  actionLabel,
 }: {
-  message: string;
+  icon: React.ElementType;
+  title: string;
   description: string;
+  action: () => void;
+  actionLabel: string;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="text-center py-16"
-    >
-      <div className="mx-auto w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-        <ChartBar size={40} className="text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center py-20">
+      <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+        <Icon size={40} className="text-muted-foreground" />
       </div>
-      <h3 className="text-lg font-medium text-foreground mb-2">{message}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </motion.div>
-  );
-}
-
-function StatItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="p-3 rounded-lg bg-muted/50 text-center">
-      <div className="text-lg font-semibold text-foreground">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground mb-6">{description}</p>
+      <button
+        onClick={action}
+        className="btn-primary px-6 py-2 rounded-lg flex items-center gap-2"
+      >
+        {actionLabel}
+        <CaretRight size={16} weight="bold" />
+      </button>
     </div>
   );
 }
-

@@ -1,7 +1,13 @@
 "use client";
 
 import React from "react";
-import { User, FirstAid, Users, Warning } from "@phosphor-icons/react";
+import { 
+  User, 
+  Heart, 
+  FirstAid, 
+  Warning,
+  Drop,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { PatientData } from "@/lib/types";
 
@@ -20,132 +26,139 @@ export function PatientForm({ patientData, onChange }: PatientFormProps) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 mb-4">
-        <User size={20} className="text-primary" />
-        <h3 className="font-medium text-foreground">Patient Information</h3>
-        <span className="text-xs text-muted-foreground">(Optional)</span>
+      {/* Age Input */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+          <User size={16} className="text-accent-cyan" />
+          Age (optional)
+        </label>
+        <input
+          type="number"
+          min="18"
+          max="120"
+          placeholder="Enter patient age"
+          value={patientData.age || ""}
+          onChange={(e) => updateField("age", e.target.value ? parseInt(e.target.value) : undefined)}
+          className="w-full px-4 py-3 rounded-lg bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/20 transition-colors"
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {/* Age */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
-            Age
-          </label>
+      {/* Pain Level */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+          <FirstAid size={16} className="text-accent-orange" />
+          Pain Level (0-10)
+        </label>
+        <div className="space-y-2">
           <input
-            type="number"
-            min={18}
-            max={100}
-            placeholder="Enter age"
-            value={patientData.age || ""}
-            onChange={(e) =>
-              updateField("age", e.target.value ? parseInt(e.target.value) : undefined)
-            }
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            type="range"
+            min="0"
+            max="10"
+            value={patientData.pain_level || 0}
+            onChange={(e) => updateField("pain_level", parseInt(e.target.value))}
+            className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-accent-cyan"
           />
-        </div>
-
-        {/* Pain Level */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">
-            Pain Level (0-10)
-          </label>
-          <input
-            type="number"
-            min={0}
-            max={10}
-            placeholder="0-10"
-            value={patientData.pain_level ?? ""}
-            onChange={(e) =>
-              updateField(
-                "pain_level",
-                e.target.value ? parseInt(e.target.value) : undefined
-              )
-            }
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>No pain</span>
+            <span className="text-foreground font-medium">
+              {patientData.pain_level ?? 0}
+            </span>
+            <span>Severe</span>
+          </div>
         </div>
       </div>
 
-      {/* Checkboxes */}
+      {/* Toggle Options */}
       <div className="space-y-3 pt-2">
-        <CheckboxField
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Clinical Indicators
+        </h4>
+        
+        <ToggleOption
+          icon={Heart}
+          label="Family History"
+          description="Close relatives with breast cancer"
           checked={patientData.family_history}
-          onChange={(v) => updateField("family_history", v)}
-          icon={<Users size={16} />}
-          label="Family history of breast cancer"
+          onChange={(checked) => updateField("family_history", checked)}
+          color="purple"
         />
-
-        <CheckboxField
+        
+        <ToggleOption
+          icon={Warning}
+          label="Lump Detected"
+          description="Palpable mass identified"
           checked={patientData.lump_detected}
-          onChange={(v) => updateField("lump_detected", v)}
-          icon={<FirstAid size={16} />}
-          label="Lump detected during self-examination"
+          onChange={(checked) => updateField("lump_detected", checked)}
+          color="orange"
         />
-
-        <CheckboxField
+        
+        <ToggleOption
+          icon={Drop}
+          label="Nipple Discharge"
+          description="Abnormal nipple secretion"
           checked={patientData.nipple_discharge}
-          onChange={(v) => updateField("nipple_discharge", v)}
-          icon={<Warning size={16} />}
-          label="Nipple discharge present"
+          onChange={(checked) => updateField("nipple_discharge", checked)}
+          color="pink"
         />
       </div>
     </div>
   );
 }
 
-interface CheckboxFieldProps {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  icon: React.ReactNode;
+interface ToggleOptionProps {
+  icon: React.ElementType;
   label: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  color: "purple" | "orange" | "pink";
 }
 
-function CheckboxField({ checked, onChange, icon, label }: CheckboxFieldProps) {
+function ToggleOption({ 
+  icon: Icon, 
+  label, 
+  description, 
+  checked, 
+  onChange,
+  color,
+}: ToggleOptionProps) {
+  const colorClasses = {
+    purple: "text-accent-purple",
+    orange: "text-accent-orange",
+    pink: "text-accent-pink",
+  };
+
   return (
-    <label
-      className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200",
-        checked
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50"
-      )}
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="sr-only"
-      />
-      <div
-        className={cn(
-          "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-          checked
-            ? "bg-primary border-primary"
-            : "border-border"
-        )}
-      >
-        {checked && (
-          <svg
-            className="w-3 h-3 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        )}
+    <label className={cn(
+      "flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all",
+      "bg-muted/20 border border-border",
+      checked && "bg-muted/40 border-accent-cyan/30"
+    )}>
+      <div className="flex items-center gap-3">
+        <Icon size={18} className={colorClasses[color]} />
+        <div>
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
       </div>
-      <span className={cn("text-muted-foreground", checked && "text-primary")}>
-        {icon}
-      </span>
-      <span className="text-sm text-foreground">{label}</span>
+      
+      {/* Custom Toggle */}
+      <div className="relative">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="sr-only peer"
+        />
+        <div className={cn(
+          "w-11 h-6 rounded-full transition-colors",
+          "bg-muted peer-checked:bg-accent-cyan"
+        )} />
+        <div className={cn(
+          "absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform",
+          "bg-foreground peer-checked:translate-x-5"
+        )} />
+      </div>
     </label>
   );
 }
-
