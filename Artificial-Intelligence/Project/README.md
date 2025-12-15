@@ -86,7 +86,7 @@ AI-project/
 
 1. Navigate to the backend directory:
 ```bash
-cd AI-project/backend
+cd Project/backend
 ```
 
 2. Create a virtual environment:
@@ -111,7 +111,7 @@ The API will be available at `http://localhost:8000`
 
 1. Navigate to the frontend directory:
 ```bash
-cd AI-project/frontend
+cd Project/frontend
 ```
 
 2. Install dependencies:
