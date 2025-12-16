@@ -1,12 +1,12 @@
 # Hybrid AI-Based Breast Tumor Diagnosis and Decision Support System
 
-A comprehensive medical decision support system that combines **CNN-based tumor classification** with **Traditional AI decision-making** to produce medically meaningful, explainable, and integrated diagnostic support.
+A comprehensive medical decision support system that combines **Custom CNN-based tumor classification** with **Traditional AI decision-making** to produce medically meaningful, explainable, and integrated diagnostic support.
 
 ## Project Overview
 
 This system addresses the challenge of early and accurate breast tumor detection by combining:
 
-- **Machine Learning (CNN):** Deep learning model for tumor classification using transfer learning
+- **Machine Learning (Custom CNN):** Deep learning model with custom architecture for tumor classification
 - **Rule-Based Expert System:** IF-THEN rules based on oncology guidelines
 - **Fuzzy Logic System:** Handles uncertainty in predictions and provides nuanced risk assessment
 - **Web Interface:** Modern React frontend for image upload and result visualization
@@ -20,6 +20,7 @@ This system addresses the challenge of early and accurate breast tumor detection
 - **Explainable AI:** Grad-CAM visualization for model interpretability
 - **Fuzzy Analysis:** Handles borderline cases and uncertainty
 - **Patient Context:** Incorporates patient metadata for comprehensive analysis
+- **Apple Silicon Optimized:** GPU acceleration for M1/M2/M3/M4 Macs via PyTorch MPS
 
 ## Architecture
 
@@ -35,7 +36,7 @@ This system addresses the challenge of early and accurate breast tumor detection
 │                                                                 │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
 │  │   ML Module     │  │  Expert System  │  │  Fuzzy Logic    │  │
-│  │   (CNN/ResNet)  │─▶│  (Rule-Based)   │─▶│    System       │  │
+│  │  (Custom CNN)   │─▶│  (Rule-Based)   │─▶│    System       │  │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
 │           │                    │                    │           │
 │           └────────────────────┴────────────────────┘           │
@@ -47,16 +48,45 @@ This system addresses the challenge of early and accurate breast tumor detection
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## CNN Model Architecture
+
+Custom 5-block convolutional neural network designed for mammogram classification:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Input: 224 × 224 × 3 (RGB Image)                            │
+├──────────────────────────────────────────────────────────────┤
+│  Block 1: Conv2D(32) → BN → Conv2D(32) → BN → Pool → Drop    │
+│  Block 2: Conv2D(64) → BN → Conv2D(64) → BN → Pool → Drop    │
+│  Block 3: Conv2D(128) → BN → Conv2D(128) → BN → Pool → Drop  │
+│  Block 4: Conv2D(256) × 3 → BN × 3 → Pool → Drop             │
+│  Block 5: Conv2D(128) → BN → Conv2D(128) → BN → Pool → Drop  │
+├──────────────────────────────────────────────────────────────┤
+│  GlobalAveragePooling2D                                       │
+│  Dense(128) → BN → Dropout(0.5)                               │
+│  Dense(1, sigmoid) → Output (Benign/Malignant)               │
+└──────────────────────────────────────────────────────────────┘
+
+Features:
+• L2 regularization (0.001) on all Conv layers
+• BatchNormalization for training stability
+• Progressive dropout (0.3 → 0.4 → 0.5)
+• ~1.2M trainable parameters
+```
+
 ## Project Structure
 
 ```
-AI-project/
+Project/
 ├── backend/
 │   ├── main.py                 # FastAPI application entry point
+│   ├── train.py                # Model training script
+│   ├── prepare_dataset.py      # Dataset preparation script
 │   ├── requirements.txt        # Python dependencies
+│   ├── models/                 # Saved model weights
 │   └── src/
 │       ├── ml/                 # Machine Learning module
-│       │   ├── cnn_classifier.py    # CNN model (ResNet50)
+│       │   ├── cnn_classifier.py    # Custom CNN model
 │       │   └── preprocessing.py     # Image preprocessing
 │       ├── traditional_ai/     # Traditional AI module
 │       │   ├── expert_system.py     # Rule-based expert system
@@ -81,6 +111,7 @@ AI-project/
 - Python 3.10+
 - Node.js 18+
 - pnpm (or npm/yarn)
+- Mac with Apple Silicon (M1/M2/M3/M4) recommended for GPU acceleration
 
 ### Backend Setup
 
@@ -91,8 +122,8 @@ cd Project/backend
 
 2. Create a virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 3. Install dependencies:
@@ -100,9 +131,14 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+> **Note for Apple Silicon:** TensorFlow Metal is included for GPU acceleration. If you encounter issues, ensure you have the latest macOS and run:
+> ```bash
+> pip install tensorflow-metal
+> ```
+
 4. Start the server:
 ```bash
-python main.py
+python3 main.py
 ```
 
 The API will be available at `http://localhost:8000`
@@ -126,6 +162,60 @@ pnpm dev
 
 The frontend will be available at `http://localhost:3001`
 
+## Training the Model
+
+### 1. Prepare the Dataset
+
+```bash
+cd backend
+python3 prepare_dataset.py
+```
+
+This organizes the CBIS-DDSM dataset into:
+```
+datasets/mammograms/
+├── train/
+│   ├── benign/
+│   └── malignant/
+├── val/
+│   ├── benign/
+│   └── malignant/
+└── test/
+    ├── benign/
+    └── malignant/
+```
+
+### 2. Train the Model
+
+```bash
+python3 train.py --data-dir ../datasets/mammograms --epochs 50
+```
+
+**Training options:**
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--data-dir` | `../datasets/mammograms` | Path to dataset |
+| `--epochs` | `50` | Number of training epochs |
+| `--batch-size` | `32` | Batch size |
+| `--input-size` | `224` | Input image size |
+| `--learning-rate` | `0.001` | Initial learning rate |
+| `--dropout` | `0.5` | Dropout rate |
+| `--patience` | `10` | Early stopping patience |
+
+### 3. Using the Trained Model
+
+```python
+from src.ml.cnn_classifier import BreastTumorClassifier
+
+# Load trained model
+classifier = BreastTumorClassifier(model_path="models/best_model.pth")
+
+# Predict
+with open("mammogram.jpg", "rb") as f:
+    result = classifier.predict(f.read())
+    print(result)
+```
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
@@ -136,19 +226,6 @@ The frontend will be available at `http://localhost:3001`
 | `/api/gradcam` | POST | Generate Grad-CAM visualization |
 | `/api/preprocess` | POST | Image preprocessing |
 | `/api/rules` | GET | List expert system rules |
-
-## Machine Learning Component
-
-### Model Architecture
-- **Base Model:** ResNet50 (pretrained on ImageNet)
-- **Transfer Learning:** Fine-tuned for binary classification
-- **Output:** Benign/Malignant classification with confidence scores
-
-### Preprocessing
-- Resizing to 224x224
-- Normalization with ImageNet statistics
-- CLAHE contrast enhancement (optional)
-- Noise removal via bilateral filtering
 
 ## Traditional AI Component
 
@@ -180,28 +257,12 @@ IF family_history == True AND confidence > 0.50
 THEN recommend = "Genetic counseling"
 ```
 
-## Training Your Own Model
-
-1. Prepare dataset following `datasets/README.md` instructions
-2. Use the `TumorClassifierTrainer` class
-3. Save trained weights to `models/`
-
-```python
-from src.ml.cnn_classifier import BreastTumorClassifier
-
-# Initialize with custom weights
-classifier = BreastTumorClassifier(
-    model_type="resnet50",
-    model_path="models/my_trained_model.pth"
-)
-```
-
 ## Technologies Used
 
 ### Backend
 - **FastAPI:** Modern Python web framework
 - **PyTorch:** Deep learning framework
-- **torchvision:** Computer vision models
+- **PyTorch MPS:** GPU acceleration for Apple Silicon
 - **scikit-fuzzy:** Fuzzy logic library
 - **OpenCV:** Image processing
 
@@ -210,7 +271,6 @@ classifier = BreastTumorClassifier(
 - **TypeScript:** Type safety
 - **Tailwind CSS 4:** Styling
 - **Radix UI:** UI components
-- **Recharts:** Data visualization
 - **Motion:** Animations
 
 ## Authors
@@ -238,4 +298,3 @@ This project is for educational purposes as part of CS351 AI course.
 ## Disclaimer
 
 This system is designed for educational and research purposes only. It should not be used as a substitute for professional medical diagnosis. Always consult with qualified healthcare professionals for medical decisions.
-

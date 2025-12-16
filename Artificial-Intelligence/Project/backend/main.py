@@ -61,11 +61,8 @@ async def root():
         "documentation": "/docs",
         "endpoints": {
             "health": "/api/health",
-            "predict": "/api/predict",
             "diagnose": "/api/diagnose",
-            "gradcam": "/api/gradcam",
-            "preprocess": "/api/preprocess",
-            "rules": "/api/rules"
+            "gradcam": "/api/gradcam"
         }
     }
 

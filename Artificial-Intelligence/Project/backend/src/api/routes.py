@@ -4,15 +4,14 @@ Handles image upload, prediction, and diagnosis
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 import io
 import base64
 from PIL import Image
 
 from ..ml.cnn_classifier import BreastTumorClassifier
-from ..ml.preprocessing import preprocess_image, enhance_contrast, get_image_stats
+from ..ml.preprocessing import enhance_contrast, get_image_stats
 from ..traditional_ai.expert_system import BreastTumorExpertSystem
 from ..traditional_ai.fuzzy_logic import FuzzyDiagnosisSystem
 
@@ -29,7 +28,13 @@ def get_classifier():
     """Lazy initialization of classifier."""
     global classifier
     if classifier is None:
-        classifier = BreastTumorClassifier(model_type="resnet50")
+        import os
+        model_path = os.path.join(os.path.dirname(__file__), "../../models/best_model.pth")
+        classifier = BreastTumorClassifier(
+            model_path=model_path,
+            model_type="transfer",
+            backbone="resnet50"
+        )
     return classifier
 
 
@@ -49,24 +54,6 @@ def get_fuzzy_system():
     return fuzzy_system
 
 
-class PatientData(BaseModel):
-    """Patient metadata for enhanced diagnosis."""
-    age: Optional[int] = None
-    pain_level: Optional[int] = None
-    family_history: Optional[bool] = False
-    lump_detected: Optional[bool] = False
-    nipple_discharge: Optional[bool] = False
-    previous_biopsies: Optional[int] = 0
-
-
-class DiagnosisResponse(BaseModel):
-    """Response model for diagnosis endpoint."""
-    success: bool
-    ml_prediction: dict
-    expert_analysis: dict
-    fuzzy_analysis: dict
-    combined_recommendation: dict
-    image_stats: dict
 
 
 @router.get("/health")
@@ -77,50 +64,6 @@ async def health_check():
         "service": "Breast Tumor Diagnosis API",
         "version": "1.0.0"
     }
-
-
-@router.post("/predict")
-async def predict_tumor(
-    image: UploadFile = File(...),
-    enhance: bool = Form(False)
-):
-    """
-    Perform CNN-based tumor classification on uploaded image.
-    
-    Args:
-        image: Mammogram image file
-        enhance: Whether to apply contrast enhancement
-    
-    Returns:
-        ML prediction results
-    """
-    try:
-        # Validate file type
-        if not image.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail="File must be an image")
-        
-        # Read image bytes
-        image_bytes = await image.read()
-        
-        # Optional contrast enhancement
-        if enhance:
-            image_bytes = enhance_contrast(image_bytes)
-        
-        # Get classifier and predict
-        clf = get_classifier()
-        prediction = clf.predict(image_bytes)
-        
-        # Get image statistics
-        stats = get_image_stats(image_bytes)
-        
-        return {
-            "success": True,
-            "prediction": prediction,
-            "image_stats": stats
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/diagnose")
@@ -247,73 +190,6 @@ async def generate_gradcam(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/preprocess")
-async def preprocess_image_endpoint(
-    image: UploadFile = File(...),
-    enhance_contrast_flag: bool = Form(True),
-    remove_noise: bool = Form(True)
-):
-    """
-    Preprocess mammogram image with enhancement options.
-    
-    Args:
-        image: Mammogram image file
-        enhance_contrast_flag: Apply CLAHE enhancement
-        remove_noise: Apply noise removal
-    
-    Returns:
-        Preprocessed image as base64 and statistics
-    """
-    try:
-        from ..ml.preprocessing import remove_noise as denoise_image
-        
-        image_bytes = await image.read()
-        
-        # Apply preprocessing
-        if enhance_contrast_flag:
-            image_bytes = enhance_contrast(image_bytes)
-        
-        if remove_noise:
-            image_bytes = denoise_image(image_bytes)
-        
-        # Get statistics
-        stats = get_image_stats(image_bytes)
-        
-        # Convert to base64
-        processed_base64 = base64.b64encode(image_bytes).decode()
-        
-        return {
-            "success": True,
-            "processed_image": processed_base64,
-            "format": "png",
-            "statistics": stats
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/rules")
-async def get_expert_rules():
-    """
-    Get list of rules in the expert system.
-    
-    Returns:
-        List of rule definitions
-    """
-    expert = get_expert_system()
-    rules = [
-        {
-            "id": rule.id,
-            "name": rule.name,
-            "description": rule.description,
-            "priority": rule.priority
-        }
-        for rule in expert.rule_base.rules
-    ]
-    return {"rules": rules, "total": len(rules)}
 
 
 def _combine_analyses(

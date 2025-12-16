@@ -2,7 +2,7 @@
 
 ## Recommended Datasets for Breast Tumor Classification
 
-This directory is a placeholder for mammogram datasets. Below are the recommended datasets for training and testing the CNN classifier.
+This directory is a placeholder for mammogram datasets. Below are the recommended datasets for training and testing the Custom CNN classifier.
 
 ### 1. CBIS-DDSM (Curated Breast Imaging Subset of DDSM)
 
@@ -28,45 +28,44 @@ datasets/
 
 **Download:** https://www.kaggle.com/datasets/martholi/inbreast (requires access)
 
-**Structure:**
-```
-datasets/
-└── INbreast/
-    ├── images/
-    └── annotations/
-```
-
 ### 3. Mini-MIAS (Mammographic Image Analysis Society)
 
 **Description:** Digitized mammograms with verified annotations.
 
 **Download:** https://www.kaggle.com/datasets/kmader/mias-mammography
 
-**Structure:**
-```
-datasets/
-└── mini-MIAS/
-    ├── images/
-    └── info.txt
-```
-
 ## Dataset Preparation
 
-### Directory Structure for Training
+### Using the Automatic Preparation Script
 
-Organize your dataset in the following structure for training:
+If you've downloaded the CBIS-DDSM dataset (archive folder), run:
+
+```bash
+cd backend
+python3 prepare_dataset.py
+```
+
+This will:
+1. Parse the CSV files for pathology labels (BENIGN/MALIGNANT)
+2. Find the corresponding cropped tumor images (ROI regions)
+3. Organize into train/val/test splits (80/20 for train/val, test from original)
+4. Copy images to the proper folder structure
+
+### Manual Directory Structure
+
+If preparing manually, organize your dataset as:
 
 ```
 datasets/
 └── mammograms/
     ├── train/
     │   ├── benign/
-    │   │   ├── image001.png
-    │   │   ├── image002.png
+    │   │   ├── image001.jpg
+    │   │   ├── image002.jpg
     │   │   └── ...
     │   └── malignant/
-    │       ├── image001.png
-    │       ├── image002.png
+    │       ├── image001.jpg
+    │       ├── image002.jpg
     │       └── ...
     ├── val/
     │   ├── benign/
@@ -78,46 +77,60 @@ datasets/
 
 ### Preprocessing Recommendations
 
-1. **Resize:** All images should be resized to 224x224 pixels (or 256x256 for cropping)
-2. **Format:** Convert to PNG or JPEG format
-3. **Normalization:** Will be handled by the preprocessing module
-4. **Augmentation:** The training module includes data augmentation
+1. **Resize:** Images are automatically resized to 224x224 pixels during training
+2. **Format:** PNG or JPEG format supported
+3. **Normalization:** Handled automatically (rescaled to [0, 1])
+4. **Augmentation:** Applied during training:
+   - Rotation (±20°)
+   - Width/Height shift (20%)
+   - Shear (20%)
+   - Zoom (20%)
+   - Horizontal/Vertical flip
 
-### Sample Training Script
+## Training Commands
 
-After placing your data, you can train the model using:
+After preparing the dataset:
 
-```python
-from src.ml.cnn_classifier import BreastTumorClassifier, TumorClassifierTrainer
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
+```bash
+cd backend
+source venv/bin/activate
 
-# Define transforms
-train_transform = transforms.Compose([
-    transforms.Resize((256, 256)),
-    transforms.RandomCrop(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip(),
-    transforms.RandomRotation(15),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+# Train with default settings
+python3 train.py --data-dir ../datasets/mammograms
 
-# Load dataset
-train_dataset = datasets.ImageFolder('datasets/mammograms/train', transform=train_transform)
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+# Train with custom settings
+python3 train.py \
+    --data-dir ../datasets/mammograms \
+    --epochs 100 \
+    --batch-size 32 \
+    --input-size 224 \
+    --learning-rate 0.001
+```
 
-# Initialize and train
-classifier = BreastTumorClassifier(model_type="resnet50")
-trainer = TumorClassifierTrainer(classifier)
+## Model Output
 
-# Training loop
-for epoch in range(50):
-    train_loss, train_acc = trainer.train_epoch(train_loader)
-    print(f"Epoch {epoch+1}: Loss={train_loss:.4f}, Acc={train_acc:.4f}")
+After training, models are saved to `backend/models/`:
+- `best_model.h5` - Best model based on validation accuracy
+- `final_model.h5` - Model from the last epoch
+- `logs/` - TensorBoard training logs
 
-# Save model
-classifier.save_model('models/tumor_classifier.pth')
+## Apple Silicon (M1/M2/M3/M4) Optimization
+
+The training script automatically uses TensorFlow Metal for GPU acceleration:
+
+```bash
+# Verify GPU is detected
+python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+```
+
+Expected output for Apple Silicon:
+```
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+```
+
+If GPU is not detected, ensure tensorflow-metal is installed:
+```bash
+pip install tensorflow-metal
 ```
 
 ## Notes
@@ -127,3 +140,12 @@ classifier.save_model('models/tumor_classifier.pth')
 - Keep patient data anonymized
 - Do not commit actual datasets to version control
 
+## Recommended Dataset Sizes
+
+| Split | Minimum | Recommended |
+|-------|---------|-------------|
+| Train | 200/class | 1000+/class |
+| Val | 50/class | 200+/class |
+| Test | 50/class | 200+/class |
+
+Larger datasets generally improve model accuracy and generalization.

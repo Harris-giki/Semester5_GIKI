@@ -17,12 +17,12 @@ interface StatsOverviewProps {
 export function StatsOverview({ results }: StatsOverviewProps) {
   const stats = [
     {
-      label: "Model Accuracy",
-      value: results ? `${(results.ml_prediction.confidence * 100).toFixed(1)}%` : "94.1%",
-      subtext: results ? "Current prediction" : "Average accuracy",
+      label: "Prediction Confidence",
+      value: results ? `${(results.ml_prediction.confidence * 100).toFixed(1)}%` : "—",
+      subtext: results ? "Current prediction confidence" : "No analysis yet",
       icon: ChartDonut,
       color: "cyan" as const,
-      progress: results ? results.ml_prediction.confidence * 100 : 94.1,
+      progress: results ? results.ml_prediction.confidence * 100 : 0,
     },
     {
       label: "Risk Score",

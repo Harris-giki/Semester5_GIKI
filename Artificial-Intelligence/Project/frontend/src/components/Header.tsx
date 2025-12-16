@@ -28,12 +28,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Center nav - could be expanded */}
-        <nav className="hidden md:flex items-center gap-1">
-          <NavLink active>Dashboard</NavLink>
-          <NavLink>Documentation</NavLink>
-          <NavLink>API</NavLink>
-        </nav>
 
         {/* Right side */}
         <div className="flex items-center gap-2">
