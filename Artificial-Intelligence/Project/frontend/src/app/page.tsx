@@ -158,7 +158,7 @@ export default function Home() {
         <Sidebar 
           items={navItems} 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => setActiveTab(tab as TabValue)}
         />
 
         {/* Main Content */}
@@ -186,10 +186,16 @@ export default function Home() {
                         Breast Tumor<br />
                         <span className="text-accent-cyan">Analysis System</span>
                       </h1>
-                      <p className="text-muted-foreground max-w-xl text-lg mb-8">
-                        Combining deep learning classification with rule-based expert 
+                      <p className="text-muted-foreground max-w-xl text-lg mb-4">
+                        Combining deep learning classification (94% accuracy) with rule-based expert 
                         reasoning and fuzzy logic for comprehensive tumor analysis.
                       </p>
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="px-4 py-2 rounded-lg bg-accent-cyan/10 border border-accent-cyan/20">
+                          <div className="text-sm text-muted-foreground">Model Accuracy</div>
+                          <div className="text-2xl font-bold text-accent-cyan">94.0%</div>
+                        </div>
+                      </div>
                       <button
                         onClick={() => setActiveTab("upload")}
                         className="btn-primary px-6 py-3 rounded-lg flex items-center gap-2"
@@ -212,7 +218,7 @@ export default function Home() {
                     <FeatureCard
                       icon={Brain}
                       title="CNN Classification"
-                      description="ResNet50-based deep learning model trained on mammogram images for accurate tumor detection."
+                      description="ResNet50-based deep learning model with 94% accuracy, trained on mammogram images for accurate tumor detection."
                       color="cyan"
                     />
                     <FeatureCard

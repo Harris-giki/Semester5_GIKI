@@ -17,17 +17,6 @@ app = FastAPI(
     title="Breast Tumor Diagnosis System",
     description="""
     Hybrid AI-Based Breast Tumor Diagnosis and Decision Support System
-    
-    This system combines:
-    - **CNN-based tumor classification** using transfer learning (ResNet50)
-    - **Rule-Based Expert System** implementing oncology guidelines
-    - **Fuzzy Logic System** for handling uncertainty
-    
-    The system provides:
-    - Tumor classification (benign/malignant)
-    - Risk assessment and severity scoring
-    - Explainable AI via Grad-CAM visualizations
-    - Clinical recommendations based on expert rules
     """,
     version="1.0.0",
     docs_url="/docs",

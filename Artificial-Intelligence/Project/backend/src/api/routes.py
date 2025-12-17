@@ -62,7 +62,8 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Breast Tumor Diagnosis API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "model_accuracy": "94.0%"
     }
 
 

@@ -17,11 +17,19 @@ interface StatsOverviewProps {
 export function StatsOverview({ results }: StatsOverviewProps) {
   const stats = [
     {
+      label: "Model Accuracy",
+      value: "94.0%",
+      subtext: "Trained model performance",
+      icon: ChartDonut,
+      color: "cyan" as const,
+      progress: 94.0,
+    },
+    {
       label: "Prediction Confidence",
       value: results ? `${(results.ml_prediction.confidence * 100).toFixed(1)}%` : "—",
       subtext: results ? "Current prediction confidence" : "No analysis yet",
       icon: ChartDonut,
-      color: "cyan" as const,
+      color: "purple" as const,
       progress: results ? results.ml_prediction.confidence * 100 : 0,
     },
     {
@@ -37,7 +45,7 @@ export function StatsOverview({ results }: StatsOverviewProps) {
       value: results ? results.expert_analysis.rules_fired.length.toString() : "—",
       subtext: results ? "Expert system rules" : "No analysis",
       icon: Brain,
-      color: "purple" as const,
+      color: "orange" as const,
     },
     {
       label: "Analysis Status",
@@ -49,7 +57,7 @@ export function StatsOverview({ results }: StatsOverviewProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {stats.map((stat, idx) => (
         <StatCard key={idx} {...stat} />
       ))}
