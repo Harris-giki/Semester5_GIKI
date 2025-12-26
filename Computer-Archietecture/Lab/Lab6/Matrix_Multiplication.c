@@ -7,7 +7,7 @@ int main() {
     int A[N][N], B[N][N], C[N][N];
     int i, j, k;
 
-    // Initialize matrices A and B
+    // Initialize matrices
     for (i = 0; i < N; i++)
         for (j = 0; j < N; j++) {
             A[i][j] = i + j;
@@ -17,14 +17,14 @@ int main() {
     printf("=== Version 1: Without ordered ===\n");
     double start1 = omp_get_wtime();
 
-    // Parallel for to compute each C[i][j]
-    #pragma omp parallel for collapse(2) private(i, j, k) shared(A, B, C)
+    #pragma omp parallel for collapse(2) private(k) shared(A, B, C)
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
             int sum = 0;
             for (k = 0; k < N; k++)
                 sum += A[i][k] * B[k][j];
             C[i][j] = sum;
+
             printf("Thread %d computed C[%d][%d] = %d\n",
                    omp_get_thread_num(), i, j, C[i][j]);
         }
@@ -33,12 +33,11 @@ int main() {
     double end1 = omp_get_wtime();
     printf("\nExecution Time (Without ordered): %f seconds\n\n", end1 - start1);
 
-    // ==========================================================
+    // Version 2: With ordered
     printf("=== Version 2: With ordered ===\n");
     double start2 = omp_get_wtime();
 
-    // Parallel for with ordered section
-    #pragma omp parallel for collapse(2) private(i, j, k) shared(A, B, C) ordered
+    #pragma omp parallel for collapse(2) private(k) shared(A, B, C) ordered
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
             int sum = 0;
@@ -47,10 +46,8 @@ int main() {
             C[i][j] = sum;
 
             #pragma omp ordered
-            {
-                printf("Thread %d computed C[%d][%d] = %d\n",
-                       omp_get_thread_num(), i, j, C[i][j]);
-            }
+            printf("Thread %d computed C[%d][%d] = %d\n",
+                   omp_get_thread_num(), i, j, C[i][j]);
         }
     }
 

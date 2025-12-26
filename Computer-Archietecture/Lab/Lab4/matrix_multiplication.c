@@ -18,17 +18,13 @@ int main() {
     double start = omp_get_wtime();
 
     // Parallelize outer loop (distribute rows among threads)
-    #pragma omp parallel for private(j, k) shared(A, B, C)
+    #pragma omp parallel for private(i, j, k) shared(A, B, C)
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
             int sum = 0;
-
-            // Use reduction to safely accumulate partial products
-            #pragma omp parallel for reduction(+:sum)
             for (k = 0; k < N; k++) {
                 sum += A[i][k] * B[k][j];
             }
-
             C[i][j] = sum;
         }
     }
